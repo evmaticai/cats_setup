@@ -1,0 +1,214 @@
+import React, { useCallback } from 'react';
+import { AbsoluteFill, Audio, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
+import * as THREE from 'three';
+import { LookStage, type LookContext } from '../../engine/look/LookStage';
+import { PIX, outline, usePixelFont } from '../../engine/overlays';
+import { buildReef } from './reef';
+import { KEYS, loadCat, type Cat, type CatKey } from './cast';
+import { catchFish, type CatchFish } from './catchfish';
+import { catPose, catRoot, axes, makeSpear, makeHearts, ramp, smooth, clamp01 } from './act';
+import TL from './timeline.json';
+
+// Dive Cats 2 "Fishing": the hook (six divers glide down), then one shot per cat, each catching its own kind of
+// fish, then Franko boops a shark that turns around and looks at him. Times live in timeline.json (the sound mix
+// reads the same file). Every frame is a pure function of t.
+
+export const DC02_FPS = TL.fps;
+export const DC02_FRAMES = Math.round(TL.dur * TL.fps);
+const V = (a: number[]) => new THREE.Vector3(a[0], a[1], a[2]);
+const UPV = new THREE.Vector3(0, 1, 0);
+const dirOf = (yaw: number) => new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw)); // yaw 0 = aiming down -Z
+const rightOf = (a: THREE.Vector3) => new THREE.Vector3().crossVectors(a, UPV).normalize();
+
+export const Dc02: React.FC<{ sound?: boolean }> = ({ sound = true }) => {
+  usePixelFont();
+  const frame = useCurrentFrame();
+  const t = frame / DC02_FPS;
+  const sc = useVideoConfig().width / 1080; // pixel sizes are authored for 1080 wide
+
+  const setup = useCallback(async (ctx: LookContext) => {
+    const reef = buildReef();
+    ctx.scene.add(reef.group);
+    const cats = {} as Record<CatKey, Cat>;
+    for (const k of KEYS) cats[k] = await loadCat(ctx, k);
+    const spear = makeSpear(0.42);
+    const hearts = makeHearts();
+    ctx.scene.add(spear.group, spear.line, hearts.group);
+    const fishes: CatchFish[] = TL.shots.map((s) => { const f = catchFish(s.fish, s.len); ctx.scene.add(f.root); return f; });
+    const shark = catchFish('shark', TL.franko.len, 5);
+    ctx.scene.add(shark.root);
+
+    const fwd = new THREE.Vector3(), up = new THREE.Vector3(), mz = new THREE.Vector3();
+    const cam = (p: THREE.Vector3, l: THREE.Vector3, fov = 42) => {
+      ctx.camera.position.copy(p); ctx.camera.fov = fov; ctx.camera.updateProjectionMatrix(); ctx.camera.up.set(0, 1, 0); ctx.camera.lookAt(l);
+      ctx.sunFollow(l, { size: 12 });
+    };
+    const kick = (tt: number, at: number, amp = 0.03) => {
+      const f = Math.round((tt - at) * 30);
+      if (f < 0 || f > 7) return;
+      const s = (f % 2 ? -1 : 1) * amp * (1 - f / 8);
+      ctx.camera.position.add(new THREE.Vector3(s, -s * 0.6, 0).applyQuaternion(ctx.camera.quaternion));
+    };
+
+    // ------------------------------------------------------------------ hook: six divers glide down
+    const hook = (tt: number) => {
+      const H = V(TL.hook.spot), D = new THREE.Vector3(0.0, -0.32, 1).normalize();
+      const slots: Record<CatKey, number[]> = { paw: [0, 0.4, 0], silent: [-1.0, 0.1, -1.1], zhenya: [1.1, 0.0, -1.2], yeji: [-2.0, -0.2, -2.2], lusya: [2.1, -0.3, -2.3], franko: [0.0, -0.6, -2.6] };
+      for (const k of KEYS) {
+        const c = cats[k], s = slots[k], p = H.clone().add(V(s)).addScaledVector(D, tt * 1.1);
+        c.rig.root.visible = true; c.gun.visible = true;
+        catRoot(c, p, D, D, 0, tt + s[0], -0.35);
+        catPose(c.rig, tt, { ph: s[0] * 2 });
+        axes(c.rig, fwd, up); c.hold(fwd, up);
+      }
+      const lead = H.clone().addScaledVector(D, tt * 1.1);
+      cam(lead.clone().add(new THREE.Vector3(1.4, -1.6 - tt * 0.15, 5.2 - tt * 0.25)), lead.clone().add(new THREE.Vector3(0, -0.4, -1.2)), 44);
+    };
+
+    // ------------------------------------------------------------------ one catch
+    const catchShot = (i: number, tt: number) => {
+      const s = TL.shots[i], c = cats[s.cat as CatKey], f = fishes[i];
+      const A = dirOf(s.yaw), R = rightOf(A), S = V(s.spot), h = c.height;
+      const dist = 1.9 + s.len;
+      const F = S.clone().addScaledVector(A, dist).add(new THREE.Vector3(0, 0.15, 0));
+      c.rig.root.visible = c.gun.visible = true; f.root.visible = true;
+      // camera: over the right shoulder, creeping in; at the hug it glides round to the cat's front-right
+      const camA = S.clone().addScaledVector(A, -2.3).addScaledVector(R, 1.0).add(new THREE.Vector3(0, 0.55, 0)).addScaledVector(A, tt * 0.12);
+      const lookA = S.clone().addScaledVector(A, 1.6 + s.len * 0.3);
+      const kH = ramp(tt, s.hug - 0.15, s.hug + 0.45);
+      const centreUp = S.clone().add(new THREE.Vector3(0, 0.05, 0));
+      const camB = centreUp.clone().addScaledVector(A, 1.2 + s.len * 0.55).addScaledVector(R, 0.9 + s.len * 0.2).add(new THREE.Vector3(0, 0.15 + h * 0.2, 0)).addScaledVector(A, -(tt - s.hug) * 0.08);
+      const lookB = centreUp.clone().add(new THREE.Vector3(0, h * 0.05, 0));
+      // swing round the cat (never through it): rotate the offset from the cat, lerp its length
+      const Cc = S.clone().add(new THREE.Vector3(0, h * 0.4, 0)), oa = camA.clone().sub(Cc), ob = camB.clone().sub(Cc);
+      const qsw = new THREE.Quaternion().slerp(new THREE.Quaternion().setFromUnitVectors(oa.clone().normalize(), ob.clone().normalize()), kH);
+      const cp = Cc.clone().add(oa.clone().normalize().applyQuaternion(qsw).multiplyScalar(THREE.MathUtils.lerp(oa.length(), ob.length(), kH)));
+      const cl = lookA.clone().lerp(lookB, kH);
+      cam(cp, cl, 42 - 4 * kH);
+      // the cat swims in, stops to shoot, then turns upright to the camera with the fish
+      const pos = S.clone().addScaledVector(A, -0.6 * (1 - smooth(tt / s.shoot)));
+      const face = ctx.camera.position.clone().sub(S).setY(0).normalize();
+      catRoot(c, pos, A, face, kH, tt);
+      const glare = s.glare ? ramp(tt, s.hug + 0.1, s.hug + 0.3) * (1 - ramp(tt, s.meow - 0.15, s.meow + 0.1)) : 0;
+      catPose(c.rig, tt, { hug: kH, ph: i, look: glare * 0.7, tilt: (1 - glare) * 0.18 * ramp(tt, s.meow, s.meow + 0.2) * Math.sin(tt * 5) });
+      axes(c.rig, fwd, up);
+      const aim = F.clone().sub(c.muzzle(mz)).normalize();
+      c.hold(aim.lerp(new THREE.Vector3(0, -1, 0).addScaledVector(face, 0.3), kH).normalize(), up.clone().lerp(face, kH).normalize()); // in the hug the gun hangs down
+      // fish: crosses from the right, booped, reeled in, then held in the hug, wriggling
+      // held at the tummy, low enough that the face stays clear above even a big (or puffed-up) fish
+      const held = s.len * (s.fish === 'puffer' ? 1.75 : 1);
+      const chest = () => c.rig.root.position.clone().add(new THREE.Vector3(0, Math.max(h * 0.12, h * 0.42 - held * 0.22), 0)).addScaledVector(face, h * 0.25 + held * 0.15);
+      let fp: THREE.Vector3;
+      if (tt < s.hit) fp = F.clone().addScaledVector(R, (s.hit - tt) * s.speed);
+      else if (tt < s.hug) fp = F.clone().lerp(chest(), smooth((tt - s.hit - 0.15) / (s.hug - s.hit - 0.15)));
+      else fp = chest();
+      f.root.position.copy(fp);
+      f.root.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), R.clone().negate());
+      const boop = clamp01(1 - (tt - s.hit) / 0.35) * (tt >= s.hit ? 1 : 0);
+      f.fishU.uAmp.value = 1 + 2.5 * boop + 0.6 * kH;
+      f.root.scale.setScalar(s.fish === 'puffer' && tt >= s.hit ? 1 + 0.75 * (1 - Math.exp(-(tt - s.hit) * 9) * Math.cos((tt - s.hit) * 14)) : 1);
+      // spear: flies from the muzzle, sticks to the fish's side, the line reels it in; gone at the hug
+      const side = fp.clone().addScaledVector(R, 0).addScaledVector(aim, -0.12 * s.len - 0.03);
+      if (tt < s.shoot) spear.hide();
+      else if (tt < s.hit) { const m = c.muzzle(mz.clone()); spear.set(m.clone().lerp(side, (tt - s.shoot) / (s.hit - s.shoot)), aim, m); }
+      else if (tt < s.hug) spear.set(side, aim, c.muzzle(mz.clone()));
+      else spear.hide();
+      if (tt >= s.hit) kick(tt, s.hit, 0.025);
+      hearts.update(c.rig.root.position.clone().add(new THREE.Vector3(0, h * 0.9, 0)).addScaledVector(face, 0.1), (tt - s.meow) / 1.0, ctx.camera, 0.11);
+    };
+
+    // ------------------------------------------------------------------ Franko and the shark
+    const sharkLocal = { tip: new THREE.Vector3(), dir: new THREE.Vector3() }, sharkHitSet = { v: false };
+    const frankoShot = (tt: number) => {
+      const s = TL.franko, c = cats.franko, A = dirOf(s.yaw), R = rightOf(A), S = V(s.spot), h = c.height;
+      c.rig.root.visible = c.gun.visible = true; shark.root.visible = true;
+      const Fs = S.clone().addScaledVector(A, 4.6).add(new THREE.Vector3(0, 0.5, 0));
+      // shark: glides in from the right, booped, slows to a stop, turns to look at Franko
+      const tau = Math.max(0, tt - s.hit), span = s.stop - s.hit;
+      const travel = tt < s.hit ? -(s.hit - tt) * 1.3 : 1.3 * Math.min(tau, span) - 0.65 * Math.min(tau, span) ** 2 / span;
+      const sp = Fs.clone().addScaledVector(R, -travel);
+      shark.root.position.copy(sp);
+      const kT = ramp(tt, s.turn[0], s.turn[1]);
+      const toCat = c.rig.root.position.clone().add(new THREE.Vector3(0, h * 0.4, 0)).sub(sp).setY(0).normalize();
+      const yaw0 = Math.atan2(R.z, -R.x), yaw1 = Math.atan2(-toCat.z, toCat.x);
+      let dy = yaw1 - yaw0; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI;
+      shark.root.rotation.set(0, yaw0 + dy * kT, 0.04 * Math.sin(tt * 0.9));
+      shark.fishU.uFast.value = 0.55;
+      shark.fishU.uAmp.value = THREE.MathUtils.lerp(0.7, 0.2, ramp(tt, s.stop - 0.4, s.stop)) + 0.8 * Math.sin(Math.PI * kT);
+      shark.fishU.uBend.value = -0.35 * Math.sign(dy) * Math.sin(Math.PI * kT);
+      shark.root.updateMatrixWorld(true);
+      // Franko: swims in, shoots, gets tugged a little, then freezes upright facing the shark
+      const tug = 0.35 * ramp(tt, s.hit, s.stop);
+      const pos = S.clone().addScaledVector(A, -0.6 * (1 - smooth(tt / s.shoot)) + tug);
+      const kU = ramp(tt, s.pov - 0.5, s.pov - 0.1);
+      const faceShark = sp.clone().sub(S).setY(0).normalize();
+      catRoot(c, pos, A, faceShark, kU, tt);
+      catPose(c.rig, tt, { surprise: kU, kick: 1 - 0.8 * kU, ph: 2 });
+      axes(c.rig, fwd, up);
+      const aimP = Fs.clone().sub(c.muzzle(mz)).normalize();
+      c.hold(aimP.clone().lerp(UPV, kU).normalize(), up.clone().lerp(faceShark, kU).normalize());
+      // the spear sticks to the shark's flank and rides with it
+      if (tt < s.shoot) { spear.hide(); sharkHitSet.v = false; }
+      else if (tt < s.hit) { const m = c.muzzle(mz.clone()), side = Fs.clone().addScaledVector(aimP, -0.32); spear.set(m.clone().lerp(side, (tt - s.shoot) / (s.hit - s.shoot)), aimP, m); }
+      else {
+        if (!sharkHitSet.v) { // store the hit in the shark's own frame (computed the same way for any frame)
+          const at = Fs.clone().addScaledVector(aimP, -0.32);
+          const inv = new THREE.Matrix4().compose(Fs, new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(R.z, -R.x), 0)), new THREE.Vector3(1, 1, 1)).invert();
+          sharkLocal.tip.copy(at).applyMatrix4(inv);
+          sharkLocal.dir.copy(aimP).transformDirection(inv);
+          sharkHitSet.v = true;
+        }
+        const tip = sharkLocal.tip.clone().applyMatrix4(shark.root.matrixWorld);
+        const dir = sharkLocal.dir.clone().transformDirection(shark.root.matrixWorld);
+        spear.set(tip, dir, tt < s.pov ? c.muzzle(mz.clone()) : null);
+      }
+      hearts.update(new THREE.Vector3(), -1, ctx.camera);
+      // camera: over the shoulder → push to the shark's face → the shark's eye view of Franko → the shark's face
+      const head = shark.root.localToWorld(new THREE.Vector3(0.3 * s.len, 0.03 * s.len, 0));
+      const fHead = c.rig.root.position.clone().add(new THREE.Vector3(0, h * 0.75, 0));
+      if (tt < s.pov) {
+        const pA = S.clone().addScaledVector(A, -1.9).addScaledVector(R, 0.45).add(new THREE.Vector3(0, 0.3, 0)).addScaledVector(A, tt * 0.1);
+        const lA = S.clone().addScaledVector(A, 2.6).addScaledVector(R, -0.25).add(new THREE.Vector3(0, 0.45, 0));
+        const kP = ramp(tt, s.turn[0], s.turn[1] + 0.1);
+        const pB = fHead.clone().lerp(head, 0.35).addScaledVector(R, 0.5).add(new THREE.Vector3(0, 0.15, 0));
+        cam(pA.lerp(pB, kP), lA.lerp(head, kP), 42 - 6 * kP);
+        if (tt >= s.hit) kick(tt, s.hit, 0.04);
+      } else if (tt < s.face) {
+        cam(head.clone().lerp(fHead, 0.45 + (tt - s.pov) * 0.05).add(new THREE.Vector3(0, 0.05, 0)), fHead, 30); // the shark's eye view, closing in
+      } else {
+        // three-quarter view of the shark's face from beside Franko (head-on, the snout reads as a ring)
+        const side = new THREE.Vector3(0, 1, 0).applyQuaternion(shark.root.quaternion).cross(new THREE.Vector3(1, 0, 0).applyQuaternion(shark.root.quaternion)).normalize();
+        const nose = new THREE.Vector3(1, 0, 0).applyQuaternion(shark.root.quaternion);
+        const p0 = head.clone().addScaledVector(nose, 2.2 - (tt - s.face) * 0.3).addScaledVector(side, -1.3).add(new THREE.Vector3(0, 0.25, 0));
+        cam(p0, head.clone().addScaledVector(nose, -0.3), 40);
+      }
+      ctx.focus(null, 0);
+    };
+
+    const all = (): THREE.Object3D[] => [...KEYS.flatMap((k) => [cats[k].rig.root, cats[k].gun]), ...fishes.map((f) => f.root), shark.root];
+    return (fr: number) => {
+      const tt = fr / DC02_FPS;
+      reef.update(tt);
+      ctx.mood('day');
+      for (const o of all()) o.visible = false;
+      spear.hide();
+      if (tt < TL.hook.t1) { hook(tt); hearts.update(new THREE.Vector3(), -1, ctx.camera); return; }
+      const i = TL.shots.findIndex((s) => tt >= s.t0 && tt < s.t1);
+      if (i >= 0) catchShot(i, tt - TL.shots[i].t0);
+      else frankoShot(tt - TL.franko.t0);
+    };
+  }, []);
+
+  const hookOn = t > 0.25 && t < 3.4;
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#000' }}>
+      <LookStage setup={setup} style="reef" />
+      {hookOn && (
+        <AbsoluteFill style={{ alignItems: 'center', top: '13%' }}>
+          <div style={{ fontFamily: PIX, fontSize: 92 * sc, color: '#fff', textShadow: outline(Math.round(7 * sc)), letterSpacing: 4, transform: `scale(${Math.min(1, 0.6 + (t - 0.25) * 4)})` }}>DIVE CATS</div>
+        </AbsoluteFill>
+      )}
+      {sound && <Audio src={staticFile('episodes/dc02/mix.wav')} />}
+    </AbsoluteFill>
+  );
+};

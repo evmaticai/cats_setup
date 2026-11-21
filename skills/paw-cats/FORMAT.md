@@ -24,6 +24,6 @@ Evidence: `cats_setup/reference/RESEARCH.md`. 76 @led3.an posts were scored agai
 9. "us on New Year?": a holiday cuddle loop under the tree.
 10. Real Silent photo → PS1 Silent reveal, inviting viewers to post their own cats.
 
-Done ideas are struck through here, with their result added once the stats come in (`hq/` dashboard).
+Done ideas are struck through here, with their result added once the stats come in (YouTube Studio, or the kipishkrytoi `hq/` dashboard).
 
 Made: "us on vacation?" (P08, 2026-11-21): Paw and Silent at sunset on a beach towel, La Isla Bonita added in the app. Result: (fill in from the dashboard)

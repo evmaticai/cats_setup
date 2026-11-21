@@ -1,147 +1,66 @@
 # Cats setup
 
-Everything a machine needs to make **Paw and Friends** cat Shorts (`@pawandfriendscats`): the tools, the repos, the
-cat models, the skills, the sign-ins, and a check that proves it all works. Six real cats (Paw, Silent, Zhenya, Yeji,
-Lusya and Franko the kitten) rebuilt as low-poly 3D characters with their own photo fur, animated in three.js code,
-rendered by Remotion, reviewed in VideoHub and posted to YouTube.
+Everything needed to make **Paw and Friends** cat Shorts (`@pawandfriendscats`), in one repo: the render project,
+the engine, the cat episodes, the 3D cat models, the sounds, the skills, the research and the channel's video
+packs. Six real cats (Paw, Silent, Zhenya, Yeji, Lusya and Franko the kitten) rebuilt as low-poly 3D characters
+with their own photo fur, animated in three.js code and rendered by Remotion. **No other repo is needed.**
 
-Quick start: do the steps below, then open Claude Code anywhere and say **"check my cats setup"**. The `cats-setup`
-skill runs every check and tells you what is still missing. Then say **"make a new cat video"** and the `paw-cats`
-skill takes it from an idea to a 4K file and its upload pack.
+Quick start: do the four setup steps below, open Claude Code and say **"check my cats setup"**. Then say
+**"make a new cat video"**.
 
 ## What is in this repo
 
 | Path | What it is |
 |---|---|
-| `skills/cats-setup/` | The skill that sets up and checks a machine (this page as steps an agent can run). |
-| `skills/paw-cats/` | The skill that makes a cat Short: idea → style lock → shots → build → sound → critic → 4K → pack. `STYLE.md` is the house look, `FORMAT.md` the format and idea bank, `CHECKS.md` the gates. |
-| `skills/prepare-to-post/` | The skill that makes the covers and copy and uploads a finished video to YouTube as Private. Shared with the other channels. |
-| `reference/RESEARCH.md` | The niche research the format comes from (76 @led3.an posts against the account's median, plus 10 peers). |
-| `reference/RETRO.md` | Every mistake of Dive Cats 2 and why it happened. The gates in `CHECKS.md` come from here. |
-| `assets/sfx/` | The approved cat sounds (CC0, Freesound; `CREDITS.md` beside them). |
-| `tools/lowpoly_fish.py` | The Blender script for the asset gate: turns a downloaded GLB into a clean scene model. |
-| `videos/` | The upload pack of each video that is public on YouTube (P01–P06): title, description, hashtags, pinned comment and cover. Worked examples for new copy and covers; the video files themselves are on YouTube. |
+| `package.json`, `src/`, `remotion.config.ts` | The Remotion project. `src/Root.tsx` registers the cat videos: `Cookies`, `Isla` (P08), `Dc02` (Dive Cats 2), `Dc03` (Dive Cats 3, in progress), plus tests (`CozyTest`, `Dc02Reef`, `Dc02Cast`, `CharLineup`). |
+| `src/engine/look/` | The engine: LookStage and the looks. `styles/cozy-smooth.ts` is the house look, `reef-smooth.ts` its underwater twin. |
+| `src/three-shorts/cozy/` | Home-scene episodes (`cookies/Cookies.tsx` is the template for a new video) and the framing gate (`gate.ts`). |
+| `src/three-shorts/dc02/`, `dc03/` | The Dive Cats underwater episodes (reef, fish, shark). |
+| `public/characters/dc02/` | The six cats (`<cat>.glb`), `geared/` (with dive masks), `fish/`, props. `dc03/` holds the hammerhead. Heights: Paw .95, Silent .95, Zhenya 1.06, Yeji .89, Lusya 1.0, Franko .68. |
+| `public/episodes/` | The sound beds of Cookies, Isla and Dive Cats 2. |
+| `skills/cats-setup/` | Sets up and checks a machine. |
+| `skills/paw-cats/` | Makes a cat Short: idea → style lock → shots → build → sound → critic → 4K → pack. `STYLE.md` is the look, `FORMAT.md` the format and idea bank, `CHECKS.md` the gates. |
+| `skills/prepare-to-post/` | Covers, tag research, copy, and the upload to YouTube as Private. |
+| `videos/` | The channel's video folders: `posted/` (P01–P06) and `queue/` (P08, P09), each with `UPLOAD.md`, the thumbnail and covers. New videos go in `queue/`. The mp4 files are not in git (too big). |
+| `films/` | Notes, scripts and sound-mix scripts of the cat films (`isla/build/mix_isla.py` is the template for a loop's sound). |
+| `reference/` | `RESEARCH.md` (the niche), `RETRO.md` (Dive Cats 2's mistakes), `ENGINE.md` (how the engine works), `COVERS.md` (how covers are staged). |
+| `assets/sfx/` | Approved cat sounds (CC0, credits beside them). |
+| `tools/lowpoly_fish.py` | The Blender script of the asset gate. |
 
-## The pieces and where each comes from
-
-| Piece | What it does | Where it comes from |
-|---|---|---|
-| **kipishkrytoi** repo, branch `three-shorts` | The engine (`src/engine/look/`, LookStage, rigs, styles `cozy-smooth` and `reef-smooth`), the cat episodes (`src/three-shorts/cozy/`, `src/three-shorts/dc02/`), the `three-shorts` and `make-character` skills (`skills/`), the channel folders (`channels/pawandfriends/`) and the posting tools (`tools/yt.py`, `tools/hq.py`). | `git@github.com:evmaticai/kipishkrytoi.git`, branch `three-shorts` |
-| **Cat models** | `public/characters/dc02/<cat>.glb` (plain) and `geared/` (with dive masks), 108 MB. Heights: Paw .95, Silent .95, Zhenya 1.06, Yeji .89, Lusya 1.0, Franko .68. | kipishkrytoi, branch `three-shorts` (plain git, like the repo's other characters) |
-| **VideoHub** | Live preview of a film from its code, review notes on frames, the render queue. MCP server `videohub` + skill `2cbinema-videohub`. | `git@github.com:evmatic-labs/videohub.git` |
-| **Research engine** | `research-run` and `hype-research` skills + MCP server `research-engine` (search, YouTube search, fetch, a ledger of sources and claims). Used for ideas and for the tag research before posting. | `git@github.com:evmatic-labs/evmatic-research-ultimate.git` |
-| **img2threejs** | Builds a new 3D model from reference images. Only needed when a video needs a new character or animal that no free model covers. | `git@github.com:img2threejs/img2threejs.git` (pinned to `v2.0.1`) |
-| **This repo** | The cat skills, research, sounds and the setup check. | `git@github.com:evmaticai/cats_setup.git` |
-
-## Setup, step by step
-
-The commands are for Windows PowerShell. On a Mac use Homebrew for the tools and `ln -s` instead of junctions.
-Every repo goes in `~/Projects/Evmaticai-projects/`; the skills expect that folder.
+## Setup (Windows PowerShell; on a Mac use Homebrew and `ln -s`)
 
 ### 1. Tools
 
-| Tool | Version that works | Install (Windows) | Needed for |
-|---|---|---|---|
-| Git + GitHub CLI | any recent | `winget install -e --id Git.Git`, `winget install -e --id GitHub.cli` | cloning, issues and PRs |
-| Node.js | 22 LTS (22.23 tested) | `winget install -e --id OpenJS.NodeJS.LTS` | Remotion, VideoHub |
-| ffmpeg | 7+ (9.0 tested) | `winget install -e --id Gyan.FFmpeg` | sound mix, loudness, covers, contact sheets |
-| Python + uv | 3.12 for the research engine | `winget install -e --id Python.Python.3.12`, `winget install -e --id astral-sh.uv` | research engine, `tools/yt.py`, `tools/hq.py` |
-| Blender | 5.2 | `winget install -e --id BlenderFoundation.Blender` | only the asset gate (`tools/lowpoly_fish.py`) |
-| Chrome + the Claude in Chrome extension | any | from google.com/chrome | uploading in YouTube Studio |
-| Claude desktop app (Code tab) or Claude Code CLI | latest | from claude.ai/download | running the skills |
-
-### 2. GitHub access
-
-Your GitHub account needs read access to `evmaticai/kipishkrytoi`, `evmatic-labs/videohub` and
-`evmatic-labs/evmatic-research-ultimate` (ask a founder). Add your SSH key to GitHub, then `gh auth login`.
-
-### 3. Clone the repos
-
 ```powershell
-mkdir $HOME\Projects\Evmaticai-projects -Force; cd $HOME\Projects\Evmaticai-projects
+winget install -e --id Git.Git; winget install -e --id OpenJS.NodeJS.LTS; winget install -e --id Gyan.FFmpeg; winget install -e --id Python.Python.3.12
 ```
 
-```powershell
-git clone -b three-shorts git@github.com:evmaticai/kipishkrytoi.git
-```
+Optional: Blender 5.2 (`winget install -e --id BlenderFoundation.Blender`), only for adding new 3D models. Chrome with
+the Claude in Chrome extension, only for uploading.
+
+### 2. Clone
 
 ```powershell
-git clone git@github.com:evmaticai/cats_setup.git
+mkdir $HOME\Projects\Evmaticai-projects -Force; cd $HOME\Projects\Evmaticai-projects; git clone https://github.com/evmaticai/cats_setup.git
 ```
+
+### 3. Install
 
 ```powershell
-git clone git@github.com:evmatic-labs/videohub.git
+cd $HOME\Projects\Evmaticai-projects\cats_setup; npm ci; npx remotion browser ensure
 ```
+
+### 4. Skills
+
+Link the three skills into Claude, so a `git pull` updates them (junctions need no admin rights):
 
 ```powershell
-git clone git@github.com:evmatic-labs/evmatic-research-ultimate.git
+$S = "$HOME\.claude\skills"; $R = "$HOME\Projects\Evmaticai-projects\cats_setup\skills"; mkdir $S -Force | Out-Null; 'cats-setup','paw-cats','prepare-to-post' | ForEach-Object { if (-not (Test-Path "$S\$_")) { New-Item -ItemType Junction -Path "$S\$_" -Target "$R\$_" | Out-Null } }
 ```
 
-Then install the engine's packages and Remotion's browser:
+Start a new Claude session so it loads them.
 
-```powershell
-cd $HOME\Projects\Evmaticai-projects\kipishkrytoi; npm ci; npx remotion browser ensure
-```
-
-### 4. Cat models
-
-The cat models come with the `three-shorts` clone: `kipishkrytoi\public\characters\dc02\` (the six `.glb` files,
-`geared\`, `fish\`, `divemask.glb`, `speargun.glb`) and `dc03\`. Check that the folder is there.
-
-### 5. VideoHub
-
-Double-click `videohub\SETUP.cmd`, or run it with the recommended answers:
-
-```powershell
-node $HOME\Projects\Evmaticai-projects\videohub\scripts\install.mjs setup --yes --agents claude
-```
-
-It makes the workspace (default `~\Documents\VideoHub`), registers the `videohub` MCP server and installs the
-`2cbinema-videohub` skill. Open VideoHub from its shortcut; the UI is http://127.0.0.1:7788.
-
-### 6. Research engine
-
-The virtualenv lives outside OneDrive (syncing a venv breaks it).
-
-```powershell
-uv venv $HOME\venvs\evmatic-research-ultimate --python 3.12
-```
-
-```powershell
-uv pip install --python $HOME\venvs\evmatic-research-ultimate\Scripts\python.exe -e "$HOME\Projects\Evmaticai-projects\evmatic-research-ultimate[dev]"
-```
-
-```powershell
-claude mcp add --scope user research-engine -- "$HOME\venvs\evmatic-research-ultimate\Scripts\python.exe" -m research_engine.mcp_server
-```
-
-### 7. Skills
-
-Link every skill into `~\.claude\skills\` so a `git pull` in its repo updates it. Junctions need no admin rights.
-
-```powershell
-$S = "$HOME\.claude\skills"; $P = "$HOME\Projects\Evmaticai-projects"; mkdir $S -Force | Out-Null
-@{ 'cats-setup'="$P\cats_setup\skills\cats-setup"; 'paw-cats'="$P\cats_setup\skills\paw-cats"; 'prepare-to-post'="$P\cats_setup\skills\prepare-to-post"; 'three-shorts'="$P\kipishkrytoi\skills\three-shorts"; 'make-character'="$P\kipishkrytoi\skills\make-character"; 'research-run'="$P\evmatic-research-ultimate\skill\claude"; 'hype-research'="$P\evmatic-research-ultimate\skill\hype" }.GetEnumerator() | ForEach-Object { if (-not (Test-Path "$S\$($_.Key)")) { New-Item -ItemType Junction -Path "$S\$($_.Key)" -Target $_.Value | Out-Null } }
-```
-
-A folder that already exists under that name is left alone; rename it first if you want the linked one. Skills load
-in a new session. Remotion's own skills (`remotion-*`) come with the Remotion plugin and are optional.
-
-### 8. Sign-ins and secrets (never commit any of these)
-
-| What | Where it goes | Needed for |
-|---|---|---|
-| YouTube OAuth client for the channel | `kipishkrytoi\client_secret.pawandfriends.json` (from a founder) | the dashboard's stats and `tools/yt.py post` |
-| YouTube token | made by `python tools/yt.py --channel pawandfriends auth --force --no-open` in `kipishkrytoi`, saved as `.yt_token.pawandfriends.json` | the same |
-| A Chrome profile signed in to the Paw and Friends channel, with the Claude in Chrome extension connected | Chrome | uploading in YouTube Studio (`prepare-to-post`) |
-
-Cat videos are wordless, so they need no ElevenLabs key. Only narrated videos (`three-shorts`) need `ELEVENLABS_API_KEY`
-in `kipishkrytoi\.env`.
-
-### 9. Check it
-
-Open a new Claude session and say **"check my cats setup"**. The `cats-setup` skill runs the checks below and
-prints one line per check. Or run them yourself, in `kipishkrytoi`:
+### 5. Check
 
 ```powershell
 npx tsc --noEmit -p .
@@ -151,51 +70,51 @@ npx tsc --noEmit -p .
 npx remotion still src/index.ts Cookies out/setup-check.png --frame=60
 ```
 
-`out\setup-check.png` should show Paw and Silent with cookies in the soft, saturated Dive Cats 1 look (`CozyTest` is the old pixel look, so it is not the check). Then `claude mcp list` should
-show `videohub` and `research-engine` as connected.
+`out\setup-check.png` should show Paw and Silent with cookies in the soft, saturated Dive Cats 1 look. Or say
+**"check my cats setup"** and the `cats-setup` skill runs every check.
+
+### Optional extras
+
+| Extra | What it adds | Without it |
+|---|---|---|
+| [VideoHub](https://github.com/evmatic-labs/videohub) (founders' repo) | Live preview, notes on frames, render queue | Watch the 720p preview mp4 as a file; render with `npx remotion render` |
+| [Research engine](https://github.com/evmatic-labs/evmatic-research-ultimate) (founders' repo) | Hype research for ideas, tag research before posting | Use the idea bank in `FORMAT.md` and plain web search |
+| YouTube Studio access to Paw and Friends (a founder adds you) | Uploading | A founder uploads the finished folder |
 
 ## Making a video
 
 Say **"make a new cat video"** (or give the idea: "us at 3am?, Paw grooms Silent"). The `paw-cats` skill:
 
 1. **Idea:** one beat from `FORMAT.md` or yours, as one sentence with the caption.
-2. **Style lock:** one still in the `cozy-smooth` look next to the Dive Cats 1 frames. You OK it before anything is built.
+2. **Style lock:** one still in the `cozy-smooth` look next to the Dive Cats 1 look. You OK it before anything is built.
 3. **Shot sheet:** 1–3 shots, each with its payoff (what must read, how big, how long).
 4. **Assets:** any new prop or animal passes the asset gate (CC0 / CC BY, side-by-side with its reference).
-5. **Build:** the scene in `src/three-shorts/cozy/<ep>/` (start from `cookies/Cookies.tsx`), with the framing gate on every frame.
+5. **Build:** a new folder in `src/three-shorts/cozy/<ep>/` (start from `cookies/Cookies.tsx`), registered in `src/Root.tsx`, with the framing gate on every frame.
 6. **Sound:** an original wordless bed, a full (−14 LUFS) and a clean (−22 LUFS) version. Popular songs are added in the app at upload, never in the file.
-7. **Critic, then preview:** a fresh agent hunts problems in full-size frames; then you watch the 720p preview in VideoHub.
-8. **Final and pack:** 4K render, 2–3 covers, `channels/pawandfriends/videos/queue/Pxx · <title>/` with `UPLOAD.md`.
-9. **Teach:** each fix becomes a rule in the skill. Commit it to this repo.
+7. **Critic, then preview:** a fresh agent hunts problems in full-size frames; then you watch the 720p preview.
+8. **Final and pack:** 4K render, 2–3 covers, `videos/queue/Pxx · <title>/` with `UPLOAD.md`.
+9. **Teach:** each fix becomes a rule in the skill.
 
-Then say **"post it"**: `prepare-to-post` researches the tags, writes the copy and uploads it as **Private**. It goes
-Public only on your word.
+Then commit and push: the episode code, the pack and any skill change. Say **"post it"** to upload as **Private**
+with `prepare-to-post`; it goes Public only on the channel owner's word.
 
 The format in one line: a 7–9 s wordless loop of two cats in an "us?" moment, frame 1 already cute, the joke in the
 caption, AI answered **No**.
 
-## Where things live
+Useful commands (in the repo folder):
 
-| Thing | Path |
+| Command | Does |
 |---|---|
-| Episode code | `kipishkrytoi/src/three-shorts/cozy/<ep>/` |
-| Looks | `kipishkrytoi/src/engine/look/styles/cozy-smooth.ts`, `reef-smooth.ts` |
-| Framing gate | `kipishkrytoi/src/three-shorts/cozy/gate.ts` |
-| Cat models | `kipishkrytoi/public/characters/dc02/` |
-| Channel videos | `kipishkrytoi/channels/pawandfriends/videos/{queue,posted,dropped}/` (layout in `channels/README.md`) |
-| Video stats | `kipishkrytoi/channels/pawandfriends/videos/INDEX.md` (made by `python tools/yt.py stats`) |
-| Films and renders | the VideoHub workspace: `films/<name>/`, `outputs/<date>/` |
+| `npx remotion studio src/index.ts` | Opens the Remotion studio to scrub any video |
+| `npx remotion still src/index.ts <Comp> out/x.png --frame=<n>` | One frame |
+| `npx remotion render src/index.ts <Comp> out/x.mp4` | The 720p video |
+| `npx remotion render src/index.ts <Comp> out/x-4k.mp4 --width=2160 --height=3840 --concurrency=2` | The 4K final (the engine draws at the size it is given; `--scale` would only upscale 720p) |
 
-## Known gaps (2026-11-21)
+## Where this came from
 
-1. **The Dive Cats reference films** (Dive Cats 1 4K, the smooth Dive Cats 2 preview) are in Sasha's VideoHub
-   workspace only. Dive Cats 1 is on YouTube as P06, which is enough to compare the look.
-2. **The video files are not in any repo** (25–620 MB each). The posted ones are on YouTube; the masters are in
-   Sasha's VideoHub workspace (`outputs/`, `ready-to-post/paw-and-friends/`, `films/<name>/final/`).
+The project was split out of the founders' `kipishkrytoi` repo (branch `three-shorts`, 2026-11-21), keeping only
+what the cat videos use. Work on cat videos happens here from now on; a change made there to the shared engine is
+copied here by hand when a cat video needs it.
 
-The `three-shorts` branch, with the cat code and the cat models, has been on GitHub since 2026-11-21 (`f6c93fc`).
-
-## Keeping it current
-
-A skill that learns a rule (the `paw-cats` Teach step) writes it into `skills/…` here. Commit and push it, and
-everyone gets it with `git pull`.
+Not in this repo: the video files (25–620 MB each; posted ones are on YouTube) and the Dive Cats 1 Blender
+project (P06 was made in Blender, not in this engine).

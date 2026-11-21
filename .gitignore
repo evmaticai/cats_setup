@@ -1,0 +1,9 @@
+node_modules/
+out/
+.env
+*.mp4
+*.mov
+*.webm
+client_secret*.json
+.yt_token*.json
+__pycache__/

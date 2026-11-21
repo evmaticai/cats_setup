@@ -7,7 +7,7 @@ description: Get a finished video ready to publish (cover image, niche research,
 
 A finished video goes in. It comes out uploaded to the right channel as **Private**, with a cover, title, description, hashtags and tags. The user watches it there, and it goes Public only on the user's own word.
 
-**Where it lives.** Every video has one folder in the kipishkrytoi repo: `channels/<channel>/videos/queue/<CODE> · <title>/` (layout and codes in `channels/README.md`). The VIDEO FACTORY panel reads it from there. Make that folder first if the video doesn't have one, and copy the render into it as `youtube_4k.mp4`. Everything this skill writes goes into that folder.
+**Where it lives.** Every video has one folder: for Paw and Friends `cats_setup/videos/queue/<CODE> · <title>/`; for the other channels, the kipishkrytoi repo's `channels/<channel>/videos/queue/<CODE> · <title>/` (layout and codes in its `channels/README.md`; the VIDEO FACTORY panel reads it from there). Make that folder first if the video doesn't have one, and copy the render into it as `youtube_4k.mp4`. Everything this skill writes goes into that folder.
 
 ## Rules
 - **Private first.** Every upload is saved as Private. Switch it to Public only when the user says so in this conversation, about this video.
@@ -24,7 +24,7 @@ A finished video goes in. It comes out uploaded to the right channel as **Privat
 
 ### 2. Cover image
 - Make **two or three cover options** at 1080x1920 (9:16). Each is a JPG **under 2 MB**: YouTube's thumbnail limit.
-- **three-shorts episodes (three.js, Remotion):** never a frame of the video (the user, 2026-11-20: "don't reuse the frames… make from created models some ultra hype and bait hook"). Follow `skills/three-shorts/COVERS.md` in the kipishkrytoi repo:
+- **three-shorts episodes (three.js, Remotion):** never a frame of the video (the user, 2026-11-20: "don't reuse the frames… make from created models some ultra hype and bait hook"). Follow `COVERS.md` (`cats_setup/reference/COVERS.md`, or `skills/three-shorts/COVERS.md` in kipishkrytoi):
   - three staged scenes built from the models, one each: absurd action, hit/threat, giant villain;
   - the story's force gets a cartoon face;
   - finished through `src/brand/thumbs.sh`.

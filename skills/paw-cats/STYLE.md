@@ -2,7 +2,7 @@
 
 The user's pick (2026-11-21), after seeing Dive Cats 2 in both looks: **"this is much better"**. The first led3.an-style PS1 pixel look (style `cozy`) was judged too pixelated and is kept only on request.
 
-Two engine styles share this look (kipishkrytoi three-shorts worktree, `src/engine/look/styles/`):
+Two engine styles share this look (`cats_setup/src/engine/look/styles/`):
 - **`cozy-smooth`** for home scenes (rooms, beds, kitchens, a beach at sunset). Its moods: `day` = a sunny room or meadow, `golden` = evening lamp or sunset, `night` = a dark room with one warm lamp.
 - **`reef-smooth`** for underwater (Dive Cats). Its moods: `day` = the reef, `golden` = the abyss, `night` = inside the cave.
 
