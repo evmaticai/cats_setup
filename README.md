@@ -20,13 +20,14 @@ skill takes it from an idea to a 4K file and its upload pack.
 | `reference/RETRO.md` | Every mistake of Dive Cats 2 and why it happened. The gates in `CHECKS.md` come from here. |
 | `assets/sfx/` | The approved cat sounds (CC0, Freesound; `CREDITS.md` beside them). |
 | `tools/lowpoly_fish.py` | The Blender script for the asset gate: turns a downloaded GLB into a clean scene model. |
+| `videos/` | The upload pack of each video that is public on YouTube (P01–P06): title, description, hashtags, pinned comment and cover. Worked examples for new copy and covers; the video files themselves are on YouTube. |
 
 ## The pieces and where each comes from
 
 | Piece | What it does | Where it comes from |
 |---|---|---|
-| **kipishkrytoi** repo, branch `three-shorts` | The engine (`src/engine/look/`, LookStage, rigs, styles `cozy-smooth` and `reef-smooth`), the cat episodes (`src/three-shorts/cozy/`, `src/three-shorts/dc02/`), the `three-shorts` and `make-character` skills (`skills/`), the channel folders (`channels/pawandfriends/`) and the posting tools (`tools/yt.py`, `tools/hq.py`). | `git@github.com:evmaticai/kipishkrytoi.git` (see **Known gaps**) |
-| **Cat models** | `public/characters/dc02/<cat>.glb` (plain) and `geared/` (with dive masks), 108 MB. Heights: Paw .95, Silent .95, Zhenya 1.06, Yeji .89, Lusya 1.0, Franko .68. | Not in git yet (see **Known gaps**) |
+| **kipishkrytoi** repo, branch `three-shorts` | The engine (`src/engine/look/`, LookStage, rigs, styles `cozy-smooth` and `reef-smooth`), the cat episodes (`src/three-shorts/cozy/`, `src/three-shorts/dc02/`), the `three-shorts` and `make-character` skills (`skills/`), the channel folders (`channels/pawandfriends/`) and the posting tools (`tools/yt.py`, `tools/hq.py`). | `git@github.com:evmaticai/kipishkrytoi.git`, branch `three-shorts` |
+| **Cat models** | `public/characters/dc02/<cat>.glb` (plain) and `geared/` (with dive masks), 108 MB. Heights: Paw .95, Silent .95, Zhenya 1.06, Yeji .89, Lusya 1.0, Franko .68. | kipishkrytoi, branch `three-shorts` (plain git, like the repo's other characters) |
 | **VideoHub** | Live preview of a film from its code, review notes on frames, the render queue. MCP server `videohub` + skill `2cbinema-videohub`. | `git@github.com:evmatic-labs/videohub.git` |
 | **Research engine** | `research-run` and `hype-research` skills + MCP server `research-engine` (search, YouTube search, fetch, a ledger of sources and claims). Used for ideas and for the tag research before posting. | `git@github.com:evmatic-labs/evmatic-research-ultimate.git` |
 | **img2threejs** | Builds a new 3D model from reference images. Only needed when a video needs a new character or animal that no free model covers. | `git@github.com:img2threejs/img2threejs.git` (pinned to `v2.0.1`) |
@@ -84,8 +85,8 @@ cd $HOME\Projects\Evmaticai-projects\kipishkrytoi; npm ci; npx remotion browser 
 
 ### 4. Cat models
 
-Put the cat models in `kipishkrytoi\public\characters\dc02\` (the six `.glb` files, `geared\`, `fish\`,
-`divemask.glb`, `speargun.glb`). Until they are in git, get the folder from Sasha (see **Known gaps**).
+The cat models come with the `three-shorts` clone: `kipishkrytoi\public\characters\dc02\` (the six `.glb` files,
+`geared\`, `fish\`, `divemask.glb`, `speargun.glb`) and `dc03\`. Check that the folder is there.
 
 ### 5. VideoHub
 
@@ -187,15 +188,12 @@ caption, AI answered **No**.
 
 ## Known gaps (2026-11-21)
 
-These are only on Sasha's PC today, so a new machine cannot finish step 3 or 4 until they are pushed:
-
-1. **The `three-shorts` branch of kipishkrytoi is not on GitHub.** It is 31 commits ahead of `main` and has never been
-   pushed. The cat code on it (`src/three-shorts/cozy/`, the `cozy`, `cozy-smooth`, `reef` and `reef-smooth` styles,
-   the LookStage changes) is not even committed yet.
-2. **The cat models (108 MB) are not in git.** They need Git LFS in kipishkrytoi or a private download; this repo is
-   public, so they do not go here.
-3. **The Dive Cats reference films** (Dive Cats 1 4K, the smooth Dive Cats 2 preview) are in Sasha's VideoHub
+1. **The Dive Cats reference films** (Dive Cats 1 4K, the smooth Dive Cats 2 preview) are in Sasha's VideoHub
    workspace only. Dive Cats 1 is on YouTube as P06, which is enough to compare the look.
+2. **The video files are not in any repo** (25–620 MB each). The posted ones are on YouTube; the masters are in
+   Sasha's VideoHub workspace (`outputs/`, `ready-to-post/paw-and-friends/`, `films/<name>/final/`).
+
+The `three-shorts` branch, with the cat code and the cat models, has been on GitHub since 2026-11-21 (`f6c93fc`).
 
 ## Keeping it current
 
